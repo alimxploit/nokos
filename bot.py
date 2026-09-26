@@ -4,7 +4,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 # ================= KONFIGURASI =================
-BOT_TOKEN = "8277774482:AAH0TjsDKrjE8kMjbuMkjc0Sqs2Xll3scgk"
+BOT_TOKEN = "8277774482:AAHgoV6Sd7QY04MVGl8zZ37uTPG0wSfsT2k"
 OWNER_ID = 5280266010
 OWNER_USERNAME = "@xiolim"
 
@@ -49,21 +49,21 @@ def get_main_menu(user_first_name):
     )
     keyboard = [
         [
-            InlineKeyboardButton("Cek ID", callback_data="cek_id"),
-            InlineKeyboardButton("Stok Nokos", callback_data="stok_nokos"),
+            InlineKeyboardButton("✅ Cek ID", callback_data="cek_id"),
+            InlineKeyboardButton("📦 Stok Nokos", callback_data="stok_nokos"),
         ],
         [
-            InlineKeyboardButton("Baca Dulu", callback_data="read_first"),
-            InlineKeyboardButton("OTP Bot", callback_data="otp_bot"),
+            InlineKeyboardButton("📖 Baca Dulu", callback_data="read_first"),
+            InlineKeyboardButton("🔑 OTP Bot", callback_data="otp_bot"),
         ],
-        [InlineKeyboardButton("Ambil Misi", callback_data="ambil_misi")],
-        [InlineKeyboardButton("Klaim Nokos", callback_data="klaim_nokos")],
+        [InlineKeyboardButton("🎯 Ambil Misi", callback_data="ambil_misi")],
+        [InlineKeyboardButton("🎁 Klaim Nokos", callback_data="klaim_nokos")],
     ]
     return text, InlineKeyboardMarkup(keyboard)
 
 
 def back_button(callback="kembali"):
-    return InlineKeyboardMarkup([[InlineKeyboardButton("Kembali", callback_data=callback)]])
+    return InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Kembali", callback_data=callback)]])
 
 
 # ================= HANDLER =================
@@ -150,8 +150,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Selesaikan misi dulu untuk menambah saldo."
             )
             keyboard = [
-                [InlineKeyboardButton("Ambil Misi", callback_data="ambil_misi")],
-                [InlineKeyboardButton("Kembali", callback_data="kembali")],
+                [InlineKeyboardButton("🎯 Ambil Misi", callback_data="ambil_misi")],
+                [InlineKeyboardButton("🔙 Kembali", callback_data="kembali")],
             ]
             await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard))
         else:
@@ -165,8 +165,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             keyboard = [
                 [
-                    InlineKeyboardButton("Ya, klaim", callback_data="konfirmasi_klaim"),
-                    InlineKeyboardButton("Batal", callback_data="kembali"),
+                    InlineKeyboardButton("✅ Ya, klaim", callback_data="konfirmasi_klaim"),
+                    InlineKeyboardButton("❌ Batal", callback_data="kembali"),
                 ]
             ]
             await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard))
@@ -214,10 +214,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Daftar misi:"
         )
         keyboard = [
-            [InlineKeyboardButton("Task 1 - 1 Nokos (Novum.ai)", callback_data="task1")],
-            [InlineKeyboardButton("Task 2 - 2 Nokos (MiningGRAM)", callback_data="task2")],
-            [InlineKeyboardButton("Task 3 - 7 Nokos (Hifami APK)", callback_data="task3")],
-            [InlineKeyboardButton("Kembali", callback_data="kembali")],
+            [InlineKeyboardButton("🟢 Task 1 - 1 Nokos (Novum.ai)", callback_data="task1")],
+            [InlineKeyboardButton("🟡 Task 2 - 2 Nokos (MiningGRAM)", callback_data="task2")],
+            [InlineKeyboardButton("🔴 Task 3 - 7 Nokos (Hifami APK)", callback_data="task3")],
+            [InlineKeyboardButton("🔙 Kembali", callback_data="kembali")],
         ]
         await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard))
 
@@ -229,8 +229,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Setelah itu, kirim screenshot bukti join ke chat ini."
         )
         keyboard = [
-            [InlineKeyboardButton("Saya sudah selesai", callback_data="konfirmasi_selesai_1")],
-            [InlineKeyboardButton("Kembali", callback_data="ambil_misi")],
+            [InlineKeyboardButton("✅ Saya sudah selesai", callback_data="konfirmasi_selesai_1")],
+            [InlineKeyboardButton("🔙 Kembali", callback_data="ambil_misi")],
         ]
         await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard), disable_web_page_preview=True)
 
@@ -244,8 +244,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Setelah itu, kirim screenshot bukti task selesai."
         )
         keyboard = [
-            [InlineKeyboardButton("Saya sudah selesai", callback_data="konfirmasi_selesai_2")],
-            [InlineKeyboardButton("Kembali", callback_data="ambil_misi")],
+            [InlineKeyboardButton("✅ Saya sudah selesai", callback_data="konfirmasi_selesai_2")],
+            [InlineKeyboardButton("🔙 Kembali", callback_data="ambil_misi")],
         ]
         await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard), disable_web_page_preview=True)
 
@@ -259,8 +259,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Setelah itu, kirim screenshot tanaman Level 20."
         )
         keyboard = [
-            [InlineKeyboardButton("Saya sudah selesai", callback_data="konfirmasi_selesai_3")],
-            [InlineKeyboardButton("Kembali", callback_data="ambil_misi")],
+            [InlineKeyboardButton("✅ Saya sudah selesai", callback_data="konfirmasi_selesai_3")],
+            [InlineKeyboardButton("🔙 Kembali", callback_data="ambil_misi")],
         ]
         await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard), disable_web_page_preview=True)
 
@@ -275,8 +275,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         keyboard = [
             [
-                InlineKeyboardButton("Ya, ajukan", callback_data=f"selesai_{task_num}"),
-                InlineKeyboardButton("Batal", callback_data=f"task{task_num}"),
+                InlineKeyboardButton("✅ Ya, ajukan", callback_data=f"selesai_{task_num}"),
+                InlineKeyboardButton("❌ Batal", callback_data=f"task{task_num}"),
             ]
         ]
         await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard))
@@ -301,20 +301,85 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Nokos akan otomatis ditambahkan jika terbukti benar.",
             reply_markup=back_button(),
         )
+
+        reward = TASK_INFO.get(task_num, {}).get("reward", 0)
+        task_name = TASK_INFO.get(task_num, {}).get("name", "-")
+        owner_keyboard = [
+            [
+                InlineKeyboardButton("✅ Verifikasi", callback_data=f"verify_{user_id}_{task_num}"),
+                InlineKeyboardButton("❌ Tolak", callback_data=f"reject_{user_id}_{task_num}"),
+            ]
+        ]
         try:
             await context.bot.send_message(
                 chat_id=OWNER_ID,
                 text=(
-                    f"Pengajuan misi baru\n"
+                    f"🔔 Pengajuan misi baru\n"
                     f"User: {user_id}\n"
                     f"Nama: {first_name}\n"
-                    f"Task: {task_num}\n"
+                    f"Task: {task_num} ({task_name})\n"
+                    f"Reward: {reward} Nokos\n"
                     f"Status: Pending\n\n"
-                    f"Mohon segera diverifikasi."
+                    f"Tunggu bukti screenshot sebelum menekan Verifikasi."
                 ),
+                reply_markup=InlineKeyboardMarkup(owner_keyboard),
             )
         except Exception as e:
             logging.warning(f"Gagal notifikasi owner (misi): {e}")
+
+    # ---------- Owner verifikasi / tolak misi lewat tombol ----------
+    elif data.startswith("verify_") or data.startswith("reject_"):
+        if user_id != OWNER_ID:
+            await query.answer("Kamu bukan owner.", show_alert=True)
+            return
+
+        action, target_id_str, task_num = data.split("_")
+        target_id = int(target_id_str)
+        target = get_user(target_id)
+
+        if target["status"] != "pending" or target["task"] != task_num:
+            await query.edit_message_text(
+                query.message.text + "\n\n⚠️ Sudah diproses sebelumnya.",
+            )
+            return
+
+        task_name = TASK_INFO.get(task_num, {}).get("name", "-")
+
+        if action == "verify":
+            reward = TASK_INFO.get(task_num, {}).get("reward", 0)
+            target["status"] = "approved"
+            target["nokos"] += reward
+
+            await query.edit_message_text(
+                query.message.text + f"\n\n✅ Diverifikasi. +{reward} Nokos diberikan.",
+            )
+            try:
+                await context.bot.send_message(
+                    chat_id=target_id,
+                    text=(
+                        f"Misi Task {task_num} ({task_name}) kamu terverifikasi.\n"
+                        f"Kamu mendapatkan {reward} Nokos.\n"
+                        f"Total saldo Nokos: {target['nokos']}\n\n"
+                        f"Gunakan menu Klaim Nokos untuk klaim (minimal {MIN_KLAIM})."
+                    ),
+                )
+            except Exception as e:
+                logging.warning(f"Gagal kirim notifikasi verifikasi ke user: {e}")
+        else:
+            target["status"] = "rejected"
+            await query.edit_message_text(
+                query.message.text + "\n\n❌ Ditolak.",
+            )
+            try:
+                await context.bot.send_message(
+                    chat_id=target_id,
+                    text=(
+                        f"Pengajuan Task {task_num} ({task_name}) kamu ditolak.\n"
+                        f"Pastikan bukti screenshot sesuai instruksi, lalu ajukan ulang."
+                    ),
+                )
+            except Exception as e:
+                logging.warning(f"Gagal kirim notifikasi penolakan ke user: {e}")
 
 
 async def acc_nokos(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -377,4 +442,4 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logging.warning(f"Gagal forward bukti ke owner: {e}")
     else:
         await update.message.reply_text("Kirim screenshot bukti, bukan teks.")
-            
+    
