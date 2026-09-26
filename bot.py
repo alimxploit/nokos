@@ -2,10 +2,8 @@ import logging
 import time
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    ApplicationBuilder, ContextTypes, CommandHandler,
-    CallbackQueryHandler, MessageHandler, filters
-)
+from telegram.ext import ContextTypes
+from telegram.error import Forbidden, TelegramError
 
 # ================= KONFIGURASI =================
 BOT_TOKEN = "8277774482:AAHgoV6Sd7QY04MVGl8zZ37uTPG0wSfsT2k"
@@ -110,7 +108,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = user_data[user_id]
 
-    # ============ MENU UTAMA ============
     if data == "kembali":
         text, reply_markup = get_main_menu(first_name)
         try:
@@ -164,7 +161,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Kembali", callback_data="kembali")]])
         )
 
-    # ============ KLAIM NOKOS ============
     elif data == "klaim_nokos":
         saldo = user.get("nokos", 0)
         sisa = MIN_KLAIM - saldo
@@ -208,7 +204,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
-    # ============ MISI ============
     elif data == "ambil_misi":
         teks = (
             "🎯 **PILIH MISI UNTUK MENDAPATKAN NOKOS GRATIS**\n\n"
@@ -276,7 +271,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown", disable_web_page_preview=True)
 
-    # ============ TOMBOL KONFIRMASI (TETAP ADA) ============
+    # ============ KONFIRMASI ============
     elif data.startswith("selesai_"):
         task_num = data.split("_")[1]
         user_data[user_id]["status"] = "pending"
@@ -297,11 +292,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("✅ SAYA SUDAH KIRIM BUKTI", callback_data=f"konfirmasi_{task_num}")],
             [InlineKeyboardButton("🔙 Kembali", callback_data="ambil_misi")]
         ]
-        await query.edit_message_text(
-            teks,
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="Markdown"
-        )
+        await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
     elif data.startswith("konfirmasi_"):
         task_num = data.split("_")[1]
@@ -316,212 +307,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Kembali", callback_data="kembali")]])
         )
-
-    # ============ OWNER ACC / TOLAK (TETAP ADA) ============
-    elif data.startswith("acc_"):
-        parts = data.split("_")
-        target_id = int(parts[1])
-        jumlah = int(parts[2])
-
-        if user_id != OWNER_ID:
-            await query.answer("❌ Hanya owner yang bisa ACC!", show_alert=True)
-            return
-
-        if target_id not in user_data:
-            user_data[target_id] = {
-                "status": "approved", "task": None, "nokos": 0, "klaim": 0,
-                "first_name": "", "username": ""
-            }
-
-        user_data[target_id]["status"] = "approved"
-        user_data[target_id]["nokos"] += jumlah
-        total = user_data[target_id]["nokos"]
-
         try:
-            await context.bot.send_message(
-                chat_id=target_id,
-                text=f"🎉 **SELAMAT!**\n\nMisi kamu terbukti benar.\nKamu mendapatkan **{jumlah} Nokos**.\n\nTotal saldo Nokos kamu: **{total}**\n\nGunakan menu **KLAIM NOKOS** untuk klaim (minimal {MIN_KLAIM}).",
-                parse_mode="Markdown"
-            )
-        except Exception as e:
-            logger.error(f"Gagal kirim ke user: {e}")
-
-        await query.edit_message_text(
-            f"✅ **BERHASIL ACC**\n\n"
-            f"👤 User: `{target_id}`\n"
-            f"💰 Ditambah: {jumlah} Nokos\n"
-            f"📊 Total saldo user: {total}",
-            parse_mode="Markdown"
-        )
-
-    elif data.startswith("tolak_"):
-        target_id = int(data.split("_")[1])
-
-        if user_id != OWNER_ID:
-            await query.answer("❌ Hanya owner yang bisa TOLAK!", show_alert=True)
-            return
-
-        if target_id in user_data:
-            user_data[target_id]["status"] = "rejected"
-
-        try:
-            await context.bot.send_message(
-                chat_id=target_id,
-                text="❌ **BUKTI DITOLAK**\n\nBukti kamu tidak valid atau tidak sesuai ketentuan.\n\nSilakan coba lagi dengan bukti yang benar.",
-                parse_mode="Markdown"
-            )
-        except Exception as e:
-            logger.error(f"Gagal kirim ke user: {e}")
-
-        await query.edit_message_text(
-            f"❌ **BUKTI DITOLAK**\n\n👤 User: `{target_id}`",
-            parse_mode="Markdown"
-        )
-
-
-# ================= HANDLER PESAN =================
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    user = user_data.get(user_id, {"task": "Unknown", "first_name": "-"})
-
-    if update.message.photo or update.message.document:
-        task = user.get("task", "Unknown")
-        task_nokos = {"1": 1, "2": 2, "3": 7}
-        jumlah = task_nokos.get(str(task), 1)
-
-        await update.message.reply_text(
-            f"✅ **BUKTI DITERIMA!**\n\n"
-            f"Task: **TASK {task}**\n\n"
-            f"Bukti kamu sedang diverifikasi oleh Admin. Mohon tunggu 1x24 jam.\n"
-            f"Jika terbukti benar, Nokos akan ditambahkan ke saldo kamu.\n\n"
-            f"💡 Cek saldo di menu **CEK ID**.",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🎁 KLAIM NOKOS", callback_data="klaim_nokos")],
-                [InlineKeyboardButton("🔙 Menu Utama", callback_data="kembali")]
-            ])
-        )
-
-        try:
-            await context.bot.forward_message(
-                chat_id=OWNER_ID,
-                from_chat_id=update.effective_chat.id,
-                message_id=update.message.message_id
-            )
             await context.bot.send_message(
                 chat_id=OWNER_ID,
-                text=(
-                    f"📩 **BUKTI BARU MASUK**\n\n"
-                    f"👤 User: `{user_id}`\n"
-                    f"📛 Nama: {user.get('first_name', '-')}\n"
-                    f"🎯 Task: {task}\n"
-                    f"💰 Hadiah: {jumlah} Nokos\n"
-                    f"📌 Status: Pending\n\n"
-                    f"Klik tombol di bawah untuk ACC:"
-                ),
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton(f"✅ ACC ({jumlah} Nokos)", callback_data=f"acc_{user_id}_{jumlah}")],
-                    [InlineKeyboardButton("❌ TOLAK", callback_data=f"tolak_{user_id}")]
-                ])
+                text=f"🔔 **PENGAJUAN MISI BARU**\n\nUser: `{user_id}`\nNama: {first_name}\nTask: {task_num}\nStatus: Pending\n\nSegera verifikasi!"
             )
         except Exception as e:
-            logger.error(f"Gagal forward: {e}")
-
-    elif update.message.text and not update.message.text.startswith("/"):
-        await update.message.reply_text(
-            "📸 **KIRIM SCREENSHOT BUKTI YA**\n\n"
-            "Tekan tombol 📎 di bawah, pilih **Galeri**, lalu pilih screenshot bukti kamu.\n\n"
-            "Kalau belum ambil misi, klik tombol di bawah:",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🎯 AMBIL MISI", callback_data="ambil_misi")]
-            ])
-        )
-
-
-# ================= MAIN =================
-
-def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
-    app.add_handler(MessageHandler(filters.PHOTO | filters.Document.ALL, handle_message))
-
-    logger.info("Bot NOKOSS XIOLIM FREE berjalan...")
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    main()   "Screenshot semua task yang sudah selesai (kecuali boost grup), lalu kirim ke bot ini.\n\n"
-            "**Hadiah:** 2 Nokos"
-        )
-        keyboard = [
-            [InlineKeyboardButton("✅ SAYA SUDAH SELESAI", callback_data="selesai_2")],
-            [InlineKeyboardButton("🔙 Kembali", callback_data="ambil_misi")]
-        ]
-        await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown", disable_web_page_preview=True)
-
-    elif data == "task3":
-        teks = (
-            "🔴 **TASK 3: DAPATKAN 7 NOKOS**\n\n"
-            "**Misi:**\n"
-            "1. Download dan Install APK HiFami lewat link di bawah.\n"
-            "2. Mainkan game di dalam APK tersebut.\n"
-            "3. Naikkan tanaman (plant) kamu sampai **Level 20**.\n\n"
-            f"🔗 **Link:** [KLIK DISINI UNTUK DOWNLOAD APK]({LINK_HIFAMI})\n\n"
-            "**Syarat Klaim:**\n"
-            "Screenshot tanaman kamu yang sudah Level 20, lalu kirim ke bot ini.\n\n"
-            "**Hadiah:** 7 Nokos"
-        )
-        keyboard = [
-            [InlineKeyboardButton("✅ SAYA SUDAH SELESAI", callback_data="selesai_3")],
-            [InlineKeyboardButton("🔙 Kembali", callback_data="ambil_misi")]
-        ]
-        await query.edit_message_text(teks, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown", disable_web_page_preview=True)
-
-    # ============ TOMBOL KONFIRMASI ============
-    elif data.startswith("selesai_"):
-        task_num = data.split("_")[1]
-        user_data[user_id]["status"] = "pending"
-        user_data[user_id]["task"] = task_num
-
-        teks = (
-            f"📸 **KIRIM BUKTI SEKARANG**\n\n"
-            f"Task: **TASK {task_num}**\n\n"
-            f"**Cara Kirim Bukti:**\n"
-            f"1. Tekan tombol 📎 (klip) di bawah kolom chat\n"
-            f"2. Pilih **Galeri** atau **File**\n"
-            f"3. Pilih screenshot bukti kamu\n"
-            f"4. Kirim ke chat ini\n\n"
-            f"**Setelah kirim, klik tombol di bawah ini:**\n\n"
-            f"⚠️ *Bukti akan diverifikasi oleh Admin dalam 1x24 jam.*"
-        )
-        keyboard = [
-            [InlineKeyboardButton("✅ SAYA SUDAH KIRIM BUKTI", callback_data=f"konfirmasi_{task_num}")],
-            [InlineKeyboardButton("🔙 Kembali", callback_data="ambil_misi")]
-        ]
-        await query.edit_message_text(
-            teks,
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="Markdown"
-        )
-
-    elif data.startswith("konfirmasi_"):
-        task_num = data.split("_")[1]
-        user_data[user_id]["status"] = "pending"
-        user_data[user_id]["task"] = task_num
-
-        await query.edit_message_text(
-            f"⏳ **MENUNGGU VERIFIKASI TASK {task_num}**\n\n"
-            "Bukti kamu sedang diverifikasi oleh Admin. Mohon tunggu 1x24 jam.\n"
-            "Jika terbukti benar, Nokos akan otomatis ditambahkan ke saldo kamu.\n\n"
-            "💡 Kamu bisa cek saldo di menu **CEK ID**.",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Kembali", callback_data="kembali")]])
-        )
+            logger.error(f"Gagal notif owner: {e}")
 
     # ============ OWNER ACC / TOLAK ============
     elif data.startswith("acc_"):
@@ -604,89 +396,16 @@ async def acc_nokos(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         user_data[target_id]["status"] = "approved"
         user_data[target_id]["nokos"] += jumlah_nokos
-        total = user_data[target_id]["nokos"]
+        user_updated = user_data[target_id]
 
         await context.bot.send_message(
             chat_id=target_id,
-            text=f"🎉 **SELAMAT!**\n\nMisi kamu terbukti benar.\nKamu mendapatkan **{jumlah_nokos} Nokos**.\n\nTotal saldo Nokos kamu: **{total}**\n\nGunakan menu **KLAIM NOKOS** untuk klaim (minimal {MIN_KLAIM}).",
+            text=f"🎉 **SELAMAT!**\n\nMisi kamu terbukti benar.\nKamu mendapatkan **{jumlah_nokos} Nokos**.\n\nTotal saldo Nokos kamu: **{user_updated['nokos']}**\n\nGunakan menu **KLAIM NOKOS** untuk klaim (minimal {MIN_KLAIM}).",
             parse_mode="Markdown"
         )
         await update.message.reply_text(f"✅ Berhasil menambah {jumlah_nokos} Nokos ke user {target_id}")
     except Exception as e:
         await update.message.reply_text(f"Format salah. Gunakan: `/acc <user_id> <jumlah_nokos>`\nError: {e}")
-
-
-async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != OWNER_ID:
-        await update.message.reply_text("❌ Kamu bukan owner!")
-        return
-
-    pesan_text = " ".join(context.args) if context.args else None
-
-    if update.message.reply_to_message:
-        source_message = update.message.reply_to_message
-    elif pesan_text:
-        source_message = None
-    else:
-        await update.message.reply_text(
-            "📢 **CARA PAKAI BROADCAST**\n\n"
-            "**Metode 1 (Teks):**\n"
-            "`/broadcast Halo semua, ada update baru!`\n\n"
-            "**Metode 2 (Reply Pesan):**\n"
-            "Reply pesan apa aja (teks, foto, video) dengan command `/broadcast`\n\n"
-            "Bot akan kirim pesan ke semua user yang pernah pakai bot ini.",
-            parse_mode="Markdown"
-        )
-        return
-
-    all_users = list(user_data.keys())
-    if not all_users:
-        await update.message.reply_text("❌ Belum ada user yang pakai bot ini.")
-        return
-
-    info_msg = await update.message.reply_text(
-        f"📢 **BROADCAST DIMULAI**\n\n"
-        f"Total user: {len(all_users)}\n"
-        f"Status: Mengirim...\n\n"
-        f"Tunggu beberapa saat ya."
-    )
-
-    berhasil = 0
-    gagal = 0
-
-    for uid in all_users:
-        try:
-            if source_message:
-                await context.bot.copy_message(
-                    chat_id=uid,
-                    from_chat_id=source_message.chat_id,
-                    message_id=source_message.message_id
-                )
-            else:
-                await context.bot.send_message(
-                    chat_id=uid,
-                    text=f"📢 **PENGUMUMAN**\n\n{pesan_text}",
-                    parse_mode="Markdown"
-                )
-            berhasil += 1
-            await asyncio.sleep(0.05)
-        except Forbidden:
-            gagal += 1
-        except TelegramError as e:
-            gagal += 1
-            logger.error(f"Gagal kirim ke {uid}: {e}")
-
-    hasil_text = (
-        f"📢 **BROADCAST SELESAI**\n\n"
-        f"✅ Berhasil: {berhasil}\n"
-        f"❌ Gagal: {gagal}\n"
-        f"📊 Total user: {len(all_users)}"
-    )
-
-    try:
-        await info_msg.edit_text(hasil_text, parse_mode="Markdown")
-    except:
-        await update.message.reply_text(hasil_text, parse_mode="Markdown")
 
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -716,4 +435,55 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"✅ **BUKTI DITERIMA!**\n\n"
             f"Task: **TASK {task}**\n\n"
             f"Bukti kamu sedang diverifikasi oleh Admin. Mohon tunggu 1x24 jam.\n"
-            f"Jika terbukti benar
+            f"Jika terbukti benar, Nokos akan ditambahkan ke saldo kamu.\n\n"
+            f"💡 Cek saldo di menu **CEK ID**.",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🎁 KLAIM NOKOS", callback_data="klaim_nokos")],
+                [InlineKeyboardButton("🔙 Menu Utama", callback_data="kembali")]
+            ])
+        )
+
+        try:
+            await context.bot.forward_message(
+                chat_id=OWNER_ID,
+                from_chat_id=update.effective_chat.id,
+                message_id=update.message.message_id
+            )
+            # Kirim pesan ke owner DENGAN TOMBOL ACC
+            await context.bot.send_message(
+                chat_id=OWNER_ID,
+                text=(
+                    f"📩 **BUKTI BARU MASUK**\n\n"
+                    f"👤 User: `{user_id}`\n"
+                    f"📛 Nama: {user.get('first_name', '-')}\n"
+                    f"🎯 Task: {task}\n"
+                    f"💰 Hadiah: {jumlah} Nokos\n"
+                    f"📌 Status: Pending\n\n"
+                    f"Pilih aksi di bawah:"
+                ),
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(f"✅ ACC ({jumlah} Nokos)", callback_data=f"acc_{user_id}_{jumlah}")],
+                    [InlineKeyboardButton("❌ TOLAK", callback_data=f"tolak_{user_id}")]
+                ])
+            )
+        except Exception as e:
+            logger.error(f"Gagal forward: {e}")
+
+    elif update.message.text and not update.message.text.startswith("/"):
+        await update.message.reply_text(
+            "📸 **KIRIM SCREENSHOT BUKTI YA**\n\n"
+            "Tekan tombol 📎 di bawah, pilih **Galeri**, lalu pilih screenshot bukti kamu.\n\n"
+            "Kalau belum ambil misi, klik tombol di bawah:",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🎯 AMBIL MISI", callback_data="ambil_misi")]
+            ])
+        )
+
+
+# ================= MAIN =================
+
+def main():
+    from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, Me
