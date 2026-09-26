@@ -4,7 +4,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 # ================= KONFIGURASI =================
-BOT_TOKEN = "8277774482:AAHgoV6Sd7QY04MVGl8zZ37uTPG0wSfsT2k"
+BOT_TOKEN = "8277774482:AAE-s26JHFQyBBGq-Pzik-FIinj1xYpKeOc"
 OWNER_ID = 5280266010
 OWNER_USERNAME = "@xiolim"
 
