@@ -5,8 +5,8 @@ from telegram.ext import (
     CallbackQueryHandler, MessageHandler, filters
 )
 from bot import (
-    start, button_handler, acc_nokos, handle_message,
-    broadcast, stats, BOT_TOKEN
+    start, button_handler, handle_message,
+    BOT_TOKEN
 )
 import asyncio
 import traceback
@@ -15,13 +15,9 @@ app = Flask(__name__)
 
 
 def process_update_sync(update_data):
-    """Proses update secara sinkron — Vercel-friendly."""
     try:
         application = ApplicationBuilder().token(BOT_TOKEN).build()
         application.add_handler(CommandHandler("start", start))
-        application.add_handler(CommandHandler("acc", acc_nokos))
-        application.add_handler(CommandHandler("broadcast", broadcast))
-        application.add_handler(CommandHandler("stats", stats))
         application.add_handler(CallbackQueryHandler(button_handler))
         application.add_handler(MessageHandler(filters.PHOTO | filters.Document.ALL, handle_message))
 
