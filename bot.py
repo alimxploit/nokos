@@ -1,21 +1,20 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+from telegram.ext import ContextTypes
 
 # ================= KONFIGURASI =================
-BOT_TOKEN = "8277774482:AAGRdBnJpjhz8RfnwZ4jjOkXWqrDfMxxgPg"
+BOT_TOKEN = "8277774482:AAHgoV6Sd7QY04MVGl8zZ37uTPG0wSfsT2k"
 OWNER_ID = 5280266010
 OWNER_USERNAME = "@limprincee"
 
 LINK_NOVUM = "https://t.me/ainovum_bot?start=ref_5280266010"
 LINK_MINING = "https://t.me/MiningGRAM_Bot/mine?startapp=2FBQFBU"
 LINK_HIFAMI = "https://s.hifamiapp.com/1/2lxOpRH3h"
-
 VIDEO_NOTE_URL = "https://files.catbox.moe/jdkcdl.mp4"
 
 user_data = {}
 
-# ================= FUNGSI HANDLER =================
+# ================= HANDLER =================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -246,13 +245,3 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
     else:
         await update.message.reply_text("Kirim screenshot bukti ya, bukan teks.")
-
-
-# ================= INISIALISASI APPLICATION =================
-def get_application():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("acc", acc_nokos))
-    app.add_handler(CallbackQueryHandler(button_handler))
-    app.add_handler(MessageHandler(filters.PHOTO | filters.Document.ALL, handle_message))
-    return app
